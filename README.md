@@ -39,5 +39,3 @@ rclone_batch --logfile /var/log/rclone_batch.log start_sync /dir /dir
 
 # Known issues
 - Actualmente solo permite guardar los ficheros de configuración en ~/.config/rclone_gdrive_batch_copy
-- Si se cancela la ejecución no se borra el enlace simbólico en tmp, sería necesario ejecutar  $ unlink /tmp/rclone.json
-- Si se cancela la ejecución no se guardan los datos de fecha de baneo de las cuentas, por lo que la siguiente vez que se ejecute intentará utilizarlas.

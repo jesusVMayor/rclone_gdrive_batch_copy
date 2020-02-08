@@ -9,6 +9,8 @@ import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
+import signal
+
 
 logger = logging.getLogger()
 logger.setLevel('INFO')
@@ -37,6 +39,7 @@ CONFIG_EXTENSION = "json"
 DEFAULT_CONFIG_FILE = os.path.join(
     CONFIG_DIR, "{}.{}".format(DEFAULT_CONFIG_FILENAME, CONFIG_EXTENSION)
 )
+TEMP_JSON = '"/tmp/rclone.json"'
 
 
 def _get_config_data(conf_path):
@@ -116,13 +119,13 @@ def config():
     rclone_config["gdrive_source"] = {
         "type": "drive",
         "scope": "drive",
-        "service_account_file": "/tmp/rclone.json",
+        "service_account_file": TEMP_JSON,
         "team_drive": gdrive_source,
     }
     rclone_config["gdrive_dest"] = {
         "type": "drive",
         "scope": "drive",
-        "service_account_file": "/tmp/rclone.json",
+        "service_account_file": TEMP_JSON,
         "team_drive": gdrive_dest,
     }
     os.makedirs(CONFIG_DIR, exist_ok=True)
@@ -208,7 +211,7 @@ def start_sync(config_file, source_directory, dest_directory):
             logger.error("Todas las cuentas baneadas")
             continue
         os.symlink(
-            os.path.join(config_data["json_folder"], new_file), "/tmp/rclone.json",
+            os.path.join(config_data["json_folder"], new_file), TEMP_JSON,
         )
         call_command = "{} {} --config={} gdrive_source:{} gdrive_dest:{}".format(
             RCLONE_COMMAND,
@@ -232,10 +235,15 @@ def start_sync(config_file, source_directory, dest_directory):
                 )
             )
             finished = True
-        os.unlink("/tmp/rclone.json")
+        os.unlink(TEMP_JSON)
+        _write_config_data(conf_path, config_data)
 
-    _write_config_data(conf_path, config_data)
+def sigint_handler(signal, frame):
+    if os.path.exists(TEMP_JSON):
+        os.unlink(TEMP_JSON)
+    sys.exit(0)
 
+signal.signal(signal.SIGINT, sigint_handler)
 
 if __name__ == "__main__":
     rclone_batch()  # pylint: disable=no-value-for-parameter

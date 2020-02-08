@@ -7,11 +7,19 @@ pip3 install -r requirements.txt.
 ```
  Para evitar instalar pep3 también se pueden instalar con apt-get install python3-[nombre del paquete]
  
+
+
+# Instalación sin git
+sudo apt-get install python3-click python3-appdirs
+wget https://github.com/jesusVMayor/rclone_gdrive_batch_copy/releases/download/1.1/rclone_batch
+
+
  - Copiar el script a /usr/bin 
  ```
 cp rclone_batch.py /usr/bin/rclone_batch
 chmod +x /usr/bin/rclone_batch
 ```
+
 
 # Comandos disponibles
  Todos los comandos tienen el parametro opcional --logfile 
@@ -24,10 +32,9 @@ chmod +x /usr/bin/rclone_batch
    - --config-file: parametro opcional, por defecto rclone_gdrive_batch_copy.json
    - source_dir: Directorio de team drive a copiar.
    - dest_dir: Directorio de team drive destino.
- 
-# Uso
-El script guarda un fichero de configuración, con los datos de origen, destino, y las claves .json de las cuentas que se usarán para la copia.
 
+# Ejemplo
+rclone_batch --logfile /var/log/rclone_batch.log start_sync /series /series
 
 # Known issues
 - Actualmente solo permite guardar los ficheros de configuración en ~/.config/rclone_gdrive_batch_copy

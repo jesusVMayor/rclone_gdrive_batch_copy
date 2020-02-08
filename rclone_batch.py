@@ -11,6 +11,7 @@ import sys
 from datetime import datetime, timedelta
 
 logger = logging.getLogger()
+logger.setLevel('INFO')
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 handler.setFormatter(formatter)
@@ -207,11 +208,11 @@ def start_sync(config_file, source_directory, dest_directory):
             logger.error("Todas las cuentas baneadas")
             continue
         os.symlink(
-            os.path.join(config_data["json_folder", new_file]), "/tmp/rclone.json",
+            os.path.join(config_data["json_folder"], new_file), "/tmp/rclone.json",
         )
         call_command = "{} {} --config={} gdrive_source:{} gdrive_dest:{}".format(
             RCLONE_COMMAND,
-            config_data["command"],
+            config_data["mode"],
             config_data["rclone_config"],
             source_directory,
             dest_directory,

@@ -13,7 +13,7 @@ import signal
 
 
 logger = logging.getLogger()
-logger.setLevel('INFO')
+logger.setLevel("INFO")
 handler = logging.StreamHandler()
 formatter = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 handler.setFormatter(formatter)
@@ -39,10 +39,13 @@ CONFIG_EXTENSION = "json"
 DEFAULT_CONFIG_FILE = os.path.join(
     CONFIG_DIR, "{}.{}".format(DEFAULT_CONFIG_FILENAME, CONFIG_EXTENSION)
 )
-TEMP_JSON = '"/tmp/rclone.json"'
+TEMP_JSON = "/tmp/rclone.json"
 
 
-def _get_config_data(conf_path):
+def _get_config_data(config_filename):
+    conf_path = os.path.join(
+        CONFIG_DIR, "{}.{}".format(config_filename, CONFIG_EXTENSION)
+    )
     if not os.path.exists(conf_path):
         logger.critical(
             "Fichero de configuración {} no encontrado, indique un nombre de fichero o lance el asistente de configuración".format(
@@ -55,7 +58,10 @@ def _get_config_data(conf_path):
         return config_data
 
 
-def _write_config_data(conf_path, config_data):
+def _write_config_data(config_filename, config_data):
+    conf_path = os.path.join(
+        CONFIG_DIR, "{}.{}".format(config_filename, CONFIG_EXTENSION)
+    )
     with open(conf_path, "w") as configuration_stream:
         json.dump(config_data, configuration_stream, sort_keys=True, indent=4)
 
@@ -155,7 +161,7 @@ def config():
 
 @click.option(
     "--config-file",
-    default=DEFAULT_CONFIG_FILE,
+    default=DEFAULT_CONFIG_FILENAME,
     help="nombre del fichero de configuración, si no se indica se usará el por defecto",
 )
 @rclone_batch.command()
@@ -163,23 +169,15 @@ def sync_json(config_file):
     """
         Escanea nuevamente la ruta de claves json y añade a la configuración los nuevos.
     """
-    conf_path = os.path.join(CONFIG_DIR, config_file)
-    if not os.path.exists(conf_path):
-        logger.critical(
-            "Fichero de configuración {} no encontrado, indique un nombre de fichero o lance el asistente de configuración".format(
-                conf_path
-            )
-        )
-        sys.exit(1)
-    config_data = _get_config_data(conf_path)
+    config_data = _get_config_data(config_file)
     config_data = _scan_json_folder(config_data)
-    _write_config_data(conf_path, config_data)
+    _write_config_data(config_file, config_data)
 
 
 @rclone_batch.command()
 @click.option(
     "--config-file",
-    default=DEFAULT_CONFIG_FILE,
+    default=DEFAULT_CONFIG_FILENAME,
     help="nombre del fichero de configuración, si no se indica se usará el por defecto",
 )
 @click.argument("source_directory", nargs=1)
@@ -199,17 +197,16 @@ def start_sync(config_file, source_directory, dest_directory):
             ):
                 return json_file
 
-    conf_path = os.path.join(CONFIG_DIR, config_file)
-    config_data = _get_config_data(conf_path)
-
+    config_data = _get_config_data(config_file)
+    logger.info("Iniciando copia de {} a {}".format(source_directory, dest_directory))
     finished = False
     while not finished:
         new_file = _get_next_json(config_data["json_files"])
-        logger.info("utilizando {}".format(new_file))
         if not new_file:
             finished = True
             logger.error("Todas las cuentas baneadas")
             continue
+        logger.info("utilizando {}".format(new_file))
         os.symlink(
             os.path.join(config_data["json_folder"], new_file), TEMP_JSON,
         )
@@ -236,12 +233,14 @@ def start_sync(config_file, source_directory, dest_directory):
             )
             finished = True
         os.unlink(TEMP_JSON)
-        _write_config_data(conf_path, config_data)
+        _write_config_data(config_file, config_data)
+
 
 def sigint_handler(signal, frame):
     if os.path.exists(TEMP_JSON):
         os.unlink(TEMP_JSON)
     sys.exit(0)
+
 
 signal.signal(signal.SIGINT, sigint_handler)
 

@@ -236,13 +236,14 @@ def start_sync(config_file, source_directory, dest_directory):
         _write_config_data(config_file, config_data)
 
 
-def sigint_handler(signal, frame):
+def signal_exit_handler(signal, frame):
     if os.path.exists(TEMP_JSON):
         os.unlink(TEMP_JSON)
     sys.exit(0)
 
 
-signal.signal(signal.SIGINT, sigint_handler)
+signal.signal(signal.SIGINT, signal_exit_handler)
+signal.signal(signal.SIGTERM, signal_exit_handler)
 
 if __name__ == "__main__":
     rclone_batch()  # pylint: disable=no-value-for-parameter
